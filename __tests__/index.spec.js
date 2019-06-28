@@ -50,4 +50,15 @@ describe('chatCommand', () => {
       expect(parse('TEST.foo\nTEST.bar\nabcdefgTEST.bad\n   TEST.baz')).toEqual(['foo', 'bar', 'baz'])
     })
   })
+
+  describe('execute', () => {
+    const { execute } = ChatCommand
+    it('returns undefined for a command that does not exist in actions', () => {
+      expect(execute('deep.non.existant.command')).toBe(undefined)
+    })
+
+    it('returns undefined for malformed commands (ex: calling an action that is not a function)', () => {
+      expect(execute('thisWouldBe(bad)')).toBe(undefined)
+    })
+  })
 })

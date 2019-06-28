@@ -1,6 +1,7 @@
 const isPromise = p => p instanceof Promise
 const isString = s => typeof s === 'string'
 const isFunction = f => typeof f === 'function'
+const isAnyObject = o => o instanceof Object
 
 function chatCommandFactory (namespace, actions) {
   const parse = text => {
@@ -14,13 +15,13 @@ function chatCommandFactory (namespace, actions) {
   const execute = command => command
     .split('.')
     .reduce((context, subcommand) => {
-      if (isString(context) || isPromise(context)) return context
+      if (!isAnyObject(context) || isPromise(context)) return context
 
       if (subcommand.includes('(')) {
         const arg = subcommand.replace(/^.*\(([^()]*)\).*$/, '$1')
         const action = context[subcommand.split('(')[0]]
 
-        return action(arg)
+        return isFunction(action) ? action(arg) : action
       } else {
         const action = context[subcommand]
 
