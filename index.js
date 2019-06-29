@@ -1,9 +1,7 @@
 const isPromise = p => p instanceof Promise
-const isString = s => typeof s === 'string'
 const isFunction = f => typeof f === 'function'
 const isAnyObject = o => o instanceof Object
 const isDefined = x => x != null
-
 const delimiter = '.'
 function flattenObject (obj, prefix = '') {
   return Object.keys(obj).reduce((result, key) => {
@@ -30,7 +28,7 @@ function chatCommandFactory (namespace, actions) {
   const parse = text => {
     const commands = []
     if (!text.includes(namespace)) return commands
-    text.replace(new RegExp(`(?:\\b${namespace}\\.)([^\\n ]*)`, 'gm'), (_, cmd) => { commands.push(cmd)})
+    text.replace(new RegExp(`(?:\\b${namespace}\\${delimiter})([^\\n ]*)`, 'gm'), (_, cmd) => { commands.push(cmd)})
     return commands
   }
   const execute = command => {

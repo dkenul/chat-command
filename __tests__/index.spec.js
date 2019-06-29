@@ -65,6 +65,10 @@ describe('chatCommand', () => {
     it('parses all commands in multiline strings', () => {
       expect(parse('TEST.foo\nTEST.bar\nabcdefgTEST.bad\n   TEST.baz')).toEqual(['foo', 'bar', 'baz'])
     })
+
+    it('respects the delimiter', () => {
+      expect(parse('TEST.foo TESTabar TEST_baz')).toEqual(['foo'])
+    })
   })
 
   describe('execute', () => {
