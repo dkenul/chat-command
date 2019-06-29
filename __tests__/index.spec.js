@@ -14,6 +14,9 @@ const SHALLOW_ACTIONS = {
   singleArgumentOutput (arg) {
     return `singleArgumentOutput: ${arg}`
   },
+  'dangerous(Parens()Key(notTheArg)' (arg) {
+    return `dangerous(Parens()Key() ${arg}`
+  },
 }
 const ACTIONS = {
   ...SHALLOW_ACTIONS,
@@ -92,6 +95,14 @@ describe('chatCommand', () => {
 
     it('handles functions with a single argument', () => {
       expect(execute('singleArgumentOutput(test!!123)')).toBe('singleArgumentOutput: test!!123')
+    })
+
+    it('treats nested parens as part of the input', () => {
+      expect(execute('singleArgumentOutput((x))')).toBe('singleArgumentOutput: (x)')
+    })
+
+    it('DOES NOT respect keys containing parens', () => {
+      expect(execute('dangerous(Parens()Key(notTheArg)(theArg)')).toBe(undefined)
     })
 
     it('handles nested outputs', () => {

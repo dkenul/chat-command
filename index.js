@@ -32,11 +32,12 @@ function chatCommandFactory (namespace, actions) {
     return commands
   }
   const execute = command => {
-    const hasArgs = command.includes('(')
-    const value = flatActions[hasArgs ? command.split('(')[0] : command]
+    const arg = command.replace(/^[^(]*\((.*)\)$/, '$1')
+
+    const value = flatActions[arg ? command.split('(')[0] : command]
     if (!isFunction(value)) return value
 
-    return hasArgs ? value(command.replace(/^.*\(([^()]*)\).*$/, '$1')) : value()
+    return arg ? value(arg) : value()
   }
   const executeAll = commands => Promise.all(commands.map(execute))
   const parseAndExecuteAll = text => executeAll(parse(text))
