@@ -12,14 +12,16 @@ const actions = {
   },
   sayHelloAsync () {
     return Promise.resolve('Hello Again World')
-  }
+  },
+  saySomething(something) {
+    return something
+  },
+
 }
 
 const ChatCommand = require('chat-command')(namespace, actions)
 
-// on receiving text
+// on receiving text = 'abc BOT.sayHello defg BOT.sayHelloAsync hijk BOT.saySomething(Goodbye)'
 ChatCommand(text)
-  .then(results => {
-    // results => ['Hello World', 'Hello Again World']
-  })
+// => ['Hello World', Promise{<resolved>: 'Hello Again World'}, 'Goodbye']
 ```
