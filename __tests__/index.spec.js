@@ -35,6 +35,24 @@ describe('chatCommandFactory', () => {
   it('returns a function', () => {
     expect(chatCommandFactory(NAMESPACE, ACTIONS)).toBeInstanceOf(Function)
   })
+
+  it('treats an empty string as a "global" namespace', () => {
+    const { parse } = chatCommandFactory('', ACTIONS)
+
+    expect(parse('foo')).toEqual(['foo'])
+  })
+
+  describe('overrides', () => {
+    const { execute } = chatCommandFactory(NAMESPACE, ACTIONS, {delimiter: '-', argumentDelimiter: '~'})
+
+    it('respects delimiter override', () => {
+      expect(execute('nest1-nest2-singleArgumentOutput(foo)')).toBe('singleArgumentOutput: foo')
+    })
+
+    it('respects argumentDelimiter override', () => {
+      expect(execute('nest1-nest2-multiArgumentOutput(foo~bar~baz)')).toBe('multiArgumentOutput: foo - bar - baz')
+    })
+  })
 })
 
 describe('chatCommand', () => {

@@ -1,11 +1,13 @@
-const isPromise = p => p instanceof Promise
+const DEFAULTS = {
+  delimiter: '.',
+  argumentDelimiter: /, ?/,
+}
 const isFunction = f => typeof f === 'function'
+const isPromise = p => p instanceof Promise
 const isAnyObject = o => o instanceof Object
 const isDefined = x => x != null
-const delimiter = '.'
-const argDelimiter = /, ?/
-function flattenObject (obj, prefix = '') {
-  return Object.keys(obj).reduce((result, key) => {
+const flattenObject = (obj, delimiter, prefix = '') =>
+  Object.keys(obj).reduce((result, key) => {
     const descriptor = Object.getOwnPropertyDescriptor(obj, key)
 
     if (descriptor.hasOwnProperty('value')) {
@@ -17,19 +19,21 @@ function flattenObject (obj, prefix = '') {
         return result
       }
 
-      return Object.assign(result, flattenObject(value, prefix + key + delimiter))
+      return Object.assign(result, flattenObject(value, delimiter, prefix + key + delimiter))
     }
 
     return Object.defineProperty(result, key, descriptor)
   }, {})
-}
 
-function chatCommandFactory (namespace, actions) {
-  const flatActions = flattenObject(actions)
+function chatCommandFactory (namespace, actions, overrides) {
+  const { delimiter, argumentDelimiter } = {...DEFAULTS, ...overrides}
+  const flatActions = flattenObject(actions, delimiter)
+  const maybeDelimitedNamespace = namespace ? `${namespace}\\${delimiter}` : ''
   const parse = text => {
     const commands = []
     if (!text.includes(namespace)) return commands
-    text.replace(new RegExp(`(?:\\b${namespace}\\${delimiter})([^\\n ]*)`, 'gm'), (_, cmd) => { commands.push(cmd)})
+
+    text.replace(new RegExp(`(?:\\b${maybeDelimitedNamespace})([^\\n ]+)`, 'gm'), (_, cmd) => { commands.push(cmd)})
     return commands
   }
   const execute = command => {
@@ -38,7 +42,7 @@ function chatCommandFactory (namespace, actions) {
     const value = flatActions[arg ? command.split('(')[0] : command]
     if (!isFunction(value)) return value
 
-    return arg ? value(...arg.split(argDelimiter)) : value()
+    return arg ? value(...arg.split(argumentDelimiter)) : value()
   }
   const executeAll = commands => Promise.all(commands.map(execute))
   const parseAndExecuteAll = text => executeAll(parse(text))
