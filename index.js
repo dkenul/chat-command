@@ -31,15 +31,17 @@ function chatCommandFactory (namespace, actions, overrides) {
   const maybeDelimitedNamespace = namespace ? `${namespace}\\${delimiter}` : ''
   const parse = text => {
     const commands = []
+
     if (!text.includes(namespace)) return commands
 
     text.replace(new RegExp(`(?:\\b${maybeDelimitedNamespace})([^\\n ]+)`, 'gm'), (_, cmd) => { commands.push(cmd)})
+
     return commands
   }
   const execute = command => {
     const arg = command.replace(/^[^(]*\((.*)\)$/, '$1')
-
     const value = flatActions[arg ? command.split('(')[0] : command]
+
     if (!isFunction(value)) return value
 
     return arg ? value(...arg.split(argumentDelimiter)) : value()
