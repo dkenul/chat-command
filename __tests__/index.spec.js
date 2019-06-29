@@ -1,11 +1,30 @@
 const chatCommandFactory = require('../index.js')
 const NAMESPACE = 'TEST'
-const ACTIONS = {
+const SHALLOW_ACTIONS = {
+  staticOutput: 'staticOutput',
   stringOutput () {
-    return 'OUTPUT A'
+    return 'stringOutput'
   },
   promiseOutput () {
-    return Promise.resolve('OUTPUT B')
+    return Promise.resolve('promiseOutput')
+  },
+  get getterOutput () {
+    return 'getterOutput'
+  },
+  singleArgumentOutput (arg) {
+    return `singleArgumentOutput: ${arg}`
+  },
+  'dangerous(Parens()Key(notTheArg)' (arg) {
+    return `dangerous(Parens()Key() ${arg}`
+  },
+}
+const ACTIONS = {
+  ...SHALLOW_ACTIONS,
+  nest1: {
+    ...SHALLOW_ACTIONS,
+    nest2: {
+      ...SHALLOW_ACTIONS,
+    }
   }
 }
 
@@ -48,6 +67,46 @@ describe('chatCommand', () => {
 
     it('parses all commands in multiline strings', () => {
       expect(parse('TEST.foo\nTEST.bar\nabcdefgTEST.bad\n   TEST.baz')).toEqual(['foo', 'bar', 'baz'])
+    })
+
+    it('respects the delimiter', () => {
+      expect(parse('TEST.foo TESTabar TEST_baz')).toEqual(['foo'])
+    })
+  })
+
+  describe('execute', () => {
+    const { execute } = ChatCommand
+
+    it('returns undefined for a command that does not exist in actions', () => {
+      expect(execute('deep.non.existant.command')).toBe(undefined)
+    })
+
+    it('returns undefined for malformed commands (ex: calling an action that is not a function)', () => {
+      expect(execute('thisWouldBe(bad)')).toBe(undefined)
+    })
+
+    it('handles static outputs', () => {
+      expect(execute('staticOutput')).toBe('staticOutput')
+    })
+
+    it('handles functions without arguments', () => {
+      expect(execute('stringOutput')).toBe('stringOutput')
+    })
+
+    it('handles functions with a single argument', () => {
+      expect(execute('singleArgumentOutput(test!!123)')).toBe('singleArgumentOutput: test!!123')
+    })
+
+    it('treats nested parens as part of the input', () => {
+      expect(execute('singleArgumentOutput((x))')).toBe('singleArgumentOutput: (x)')
+    })
+
+    it('DOES NOT respect keys containing parens', () => {
+      expect(execute('dangerous(Parens()Key(notTheArg)(theArg)')).toBe(undefined)
+    })
+
+    it('handles nested outputs', () => {
+      expect(execute('nest1.nest2.stringOutput')).toBe('stringOutput')
     })
   })
 })
