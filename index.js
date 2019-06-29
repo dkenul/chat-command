@@ -3,6 +3,7 @@ const isFunction = f => typeof f === 'function'
 const isAnyObject = o => o instanceof Object
 const isDefined = x => x != null
 const delimiter = '.'
+const argDelimiter = /, ?/
 function flattenObject (obj, prefix = '') {
   return Object.keys(obj).reduce((result, key) => {
     const descriptor = Object.getOwnPropertyDescriptor(obj, key)
@@ -37,7 +38,7 @@ function chatCommandFactory (namespace, actions) {
     const value = flatActions[arg ? command.split('(')[0] : command]
     if (!isFunction(value)) return value
 
-    return arg ? value(arg) : value()
+    return arg ? value(...arg.split(argDelimiter)) : value()
   }
   const executeAll = commands => Promise.all(commands.map(execute))
   const parseAndExecuteAll = text => executeAll(parse(text))

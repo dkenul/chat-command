@@ -14,6 +14,9 @@ const SHALLOW_ACTIONS = {
   singleArgumentOutput (arg) {
     return `singleArgumentOutput: ${arg}`
   },
+  multiArgumentOutput (arg1, arg2, arg3) {
+    return `multiArgumentOutput: ${arg1} - ${arg2} - ${arg3}`
+  },
   'dangerous(Parens()Key(notTheArg)' (arg) {
     return `dangerous(Parens()Key() ${arg}`
   },
@@ -95,6 +98,14 @@ describe('chatCommand', () => {
 
     it('handles functions with a single argument', () => {
       expect(execute('singleArgumentOutput(test!!123)')).toBe('singleArgumentOutput: test!!123')
+    })
+
+    it('handles functions with multiple arguments', () => {
+      expect(execute('multiArgumentOutput(a,b,c)')).toBe('multiArgumentOutput: a - b - c')
+    })
+
+    it('respects default argument delimiter for functions with multiple arguments', () => {
+      expect(execute('multiArgumentOutput(a, b,c)')).toBe('multiArgumentOutput: a - b - c')
     })
 
     it('treats nested parens as part of the input', () => {
