@@ -138,4 +138,21 @@ describe('chatCommand', () => {
       expect(execute('nest1.nest2.stringOutput')).toBe('stringOutput')
     })
   })
+
+  describe('executeAll', () => {
+    const { execute, executeAll } = ChatCommand
+    const commands = ['stringOutput', 'nest1.getterOutput']
+
+    it('is the composition map(execute)(x)', () => {
+      expect(executeAll(commands)).toEqual(commands.map(execute))
+    })
+  })
+
+  describe('parseAndExecuteAll', () => {
+    const { parse, executeAll, parseAndExecuteAll } = ChatCommand
+    const text = 'abc stringOutput def nest1.getterOutput'
+    it('is the composition (executeAll * parse)(x)', () => {
+      expect(parseAndExecuteAll(text)).toEqual(executeAll(parse(text)))
+    })
+  })
 })

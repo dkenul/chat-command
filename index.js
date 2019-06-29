@@ -44,7 +44,7 @@ function chatCommandFactory (namespace, actions, overrides) {
 
     return arg ? value(...arg.split(argumentDelimiter)) : value()
   }
-  const executeAll = commands => Promise.all(commands.map(execute))
+  const executeAll = commands => commands.map(execute)
   const parseAndExecuteAll = text => executeAll(parse(text))
 
   function ChatCommand (text) {
