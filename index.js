@@ -1,33 +1,44 @@
 const isPromise = p => p instanceof Promise
-const isString = s => typeof s === 'string'
 const isFunction = f => typeof f === 'function'
+const isAnyObject = o => o instanceof Object
+const isDefined = x => x != null
+const delimiter = '.'
+function flattenObject (obj, prefix = '') {
+  return Object.keys(obj).reduce((result, key) => {
+    const descriptor = Object.getOwnPropertyDescriptor(obj, key)
+
+    if (descriptor.hasOwnProperty('value')) {
+      const { value } = descriptor
+
+      if (isFunction(value) || isPromise(value) || !isAnyObject(value)) {
+        result[prefix + key] = value
+
+        return result
+      }
+
+      return Object.assign(result, flattenObject(value, prefix + key + delimiter))
+    }
+
+    return Object.defineProperty(result, key, descriptor)
+  }, {})
+}
 
 function chatCommandFactory (namespace, actions) {
+  const flatActions = flattenObject(actions)
   const parse = text => {
     const commands = []
-    text.replace(new RegExp(`(?:\\b${namespace}\\.)([^\\n ]*)`, 'gm'), (_, cmd) => {
-      commands.push(cmd)
-    })
+    if (!text.includes(namespace)) return commands
+    text.replace(new RegExp(`(?:\\b${namespace}\\${delimiter})([^\\n ]*)`, 'gm'), (_, cmd) => { commands.push(cmd)})
     return commands
   }
+  const execute = command => {
+    const arg = command.replace(/^[^(]*\((.*)\)$/, '$1')
 
-  const execute = command => command
-    .split('.')
-    .reduce((context, subcommand) => {
-      if (isString(context) || isPromise(context)) return context
+    const value = flatActions[arg ? command.split('(')[0] : command]
+    if (!isFunction(value)) return value
 
-      if (subcommand.includes('(')) {
-        const arg = subcommand.replace(/^.*\(([^()]*)\).*$/, '$1')
-        const action = context[subcommand.split('(')[0]]
-
-        return action(arg)
-      } else {
-        const action = context[subcommand]
-
-        return isFunction(action) ? action() : action
-      }
-    }, actions)
-
+    return arg ? value(arg) : value()
+  }
   const executeAll = commands => Promise.all(commands.map(execute))
   const parseAndExecuteAll = text => executeAll(parse(text))
 
