@@ -14,6 +14,9 @@ const SHALLOW_ACTIONS = {
   singleArgumentOutput (arg) {
     return `singleArgumentOutput: ${arg}`
   },
+  multiArgumentOutput (arg1, arg2, arg3) {
+    return `multiArgumentOutput: ${arg1} - ${arg2} - ${arg3}`
+  },
   'dangerous(Parens()Key(notTheArg)' (arg) {
     return `dangerous(Parens()Key() ${arg}`
   },
@@ -31,6 +34,24 @@ const ACTIONS = {
 describe('chatCommandFactory', () => {
   it('returns a function', () => {
     expect(chatCommandFactory(NAMESPACE, ACTIONS)).toBeInstanceOf(Function)
+  })
+
+  it('treats an empty string as a "global" namespace', () => {
+    const { parse } = chatCommandFactory('', ACTIONS)
+
+    expect(parse('foo')).toEqual(['foo'])
+  })
+
+  describe('overrides', () => {
+    const { execute } = chatCommandFactory(NAMESPACE, ACTIONS, {delimiter: '-', argumentDelimiter: '~'})
+
+    it('respects delimiter override', () => {
+      expect(execute('nest1-nest2-singleArgumentOutput(foo)')).toBe('singleArgumentOutput: foo')
+    })
+
+    it('respects argumentDelimiter override', () => {
+      expect(execute('nest1-nest2-multiArgumentOutput(foo~bar~baz)')).toBe('multiArgumentOutput: foo - bar - baz')
+    })
   })
 })
 
@@ -97,6 +118,14 @@ describe('chatCommand', () => {
       expect(execute('singleArgumentOutput(test!!123)')).toBe('singleArgumentOutput: test!!123')
     })
 
+    it('handles functions with multiple arguments', () => {
+      expect(execute('multiArgumentOutput(a,b,c)')).toBe('multiArgumentOutput: a - b - c')
+    })
+
+    it('respects default argument delimiter for functions with multiple arguments', () => {
+      expect(execute('multiArgumentOutput(a, b,c)')).toBe('multiArgumentOutput: a - b - c')
+    })
+
     it('treats nested parens as part of the input', () => {
       expect(execute('singleArgumentOutput((x))')).toBe('singleArgumentOutput: (x)')
     })
@@ -107,6 +136,23 @@ describe('chatCommand', () => {
 
     it('handles nested outputs', () => {
       expect(execute('nest1.nest2.stringOutput')).toBe('stringOutput')
+    })
+  })
+
+  describe('executeAll', () => {
+    const { execute, executeAll } = ChatCommand
+    const commands = ['stringOutput', 'nest1.getterOutput']
+
+    it('is the composition map(execute)(x)', () => {
+      expect(executeAll(commands)).toEqual(commands.map(execute))
+    })
+  })
+
+  describe('parseAndExecuteAll', () => {
+    const { parse, executeAll, parseAndExecuteAll } = ChatCommand
+    const text = 'abc stringOutput def nest1.getterOutput'
+    it('is the composition (executeAll * parse)(x)', () => {
+      expect(parseAndExecuteAll(text)).toEqual(executeAll(parse(text)))
     })
   })
 })
