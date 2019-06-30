@@ -163,3 +163,81 @@ describe('chatCommand', () => {
     })
   })
 })
+
+describe('README', () => {
+  test('Example 0 (Setup)', () => {
+    const chatCommand = chatCommandFactory('bot', {
+      hello: 'hello',
+      goodbye: () => 'goodbye'
+    })
+
+    expect(chatCommand('bot.hello bot.goodbye')).toEqual(['hello', 'goodbye'])
+  })
+
+  test('Example 1 (math)', () => {
+    const chatCommand = chatCommandFactory('math', {
+      abs (a) {
+        return Math.abs(Number(a))
+      },
+      add (a, b) {
+        return Number(a) + Number(b)
+      },
+    })
+
+    expect(chatCommand(`
+      I'm too tired to do math
+      math.add(1,2)
+      math.abs(-10)
+    `)).toEqual([3, 10])
+  })
+
+  test('Example 2 (game)', () => {
+    const players = []
+    const chatCommand = chatCommandFactory('game', {
+      players: {
+        add (name) {
+          players.push(name)
+          return `Added ${name}`
+        }
+      },
+      fight () {
+        return `${players.join(' and ')} are fighting!`
+      }
+    })
+
+    expect(chatCommand(`
+      game.players.add(Bob)
+      game.players.add(Bill)
+      game.fight
+    `)).toEqual(['Added Bob', 'Added Bill', 'Bob and Bill are fighting!'])
+  })
+
+  test('Example 4 (overrides)', () => {
+    const chatCommand = chatCommandFactory('', {
+      i: { love: { tildes: 'Me too!' } },
+      andAmpersands (a, b, c) {
+        return a + b + c
+      }
+    }, {
+      delimiter: '~', // default: '.'
+      argumentDelimiter: '&' // default: /, ?/
+    })
+
+    expect(chatCommand('i~love~tildes andAmpersands(a&b&c)')).toEqual(['Me too!', 'abc'])
+  })
+
+  test('Example 5 (helpers)', () => {
+    const { parse, execute } = chatCommandFactory('bot', {
+      doThis: 'ok',
+      dontDoThis: () => { throw Error('Bad') }
+    })
+
+    expect(parse('bot.doThis bot.dontDoThis')
+      .filter(command => command !== 'dontDoThis')
+      .map(execute)).toEqual(['ok'])
+    // ['ok']
+
+    expect(execute('doThis')).toBe('ok')
+    // 'ok'
+  })
+})
