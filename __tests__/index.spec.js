@@ -18,7 +18,10 @@ const SHALLOW_ACTIONS = {
     return `multiArgumentOutput: ${arg1} - ${arg2} - ${arg3}`
   },
   'dangerous(Parens()Key(notTheArg)' (arg) {
-    return `dangerous(Parens()Key() ${arg}`
+    return `dangerousParensKey ${arg}`
+  },
+  '..delimiter.colliding..Key.' () {
+    return 'delimiterCollidingKey'
   },
 }
 const ACTIONS = {
@@ -132,6 +135,10 @@ describe('chatCommand', () => {
 
     it('DOES NOT respect keys containing parens', () => {
       expect(execute('dangerous(Parens()Key(notTheArg)(theArg)')).toBe(undefined)
+    })
+
+    it('allows delimiter colliding keys', () => {
+      expect(execute('..delimiter.colliding..Key.')).toBe('delimiterCollidingKey')
     })
 
     it('handles nested outputs', () => {
