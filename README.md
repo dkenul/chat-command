@@ -22,7 +22,7 @@ npm install -S chat-command
  * based on the initialization parameters
  */
 const chatCommand = require('chat-command')('bot', {
-  hello: 'hello'
+  hello: 'hello',
   goodbye: () => 'goodbye'
 })
 
@@ -44,8 +44,8 @@ const chatCommand = require('chat-command')('math', {
 })
 
 chatCommand(`
-  I'm too tired to do math.
-  math.add(1, 2)
+  I'm too tired to do math
+  math.add(1,2)
   math.abs(-10)
 `)
 // [3, 10]
@@ -67,8 +67,8 @@ const chatCommand = require('chat-command')('game', {
 })
 
 chatCommand(`
-  game.add(Bob)
-  game.add(Bill)
+  game.players.add(Bob)
+  game.players.add(Bill)
   game.fight
 `)
 // ['Added Bob', 'Added Bill', 'Bob and Bill are fighting!']
@@ -115,8 +115,8 @@ chatCommand('i~love~tildes andAmpersands(a&b&c)')
 The logic is composed of helpers `parse` and `execute` which may also be accessed separately for more granular control
 ```js
 const { parse, execute } = require('chat-command')('bot', {
-  doThis: 'ok'
-  dontDoThis: () => throw Error('Bad')
+  doThis: 'ok',
+  dontDoThis: () => { throw Error('Bad') }
 })
 
 parse('bot.doThis bot.dontDoThis')
