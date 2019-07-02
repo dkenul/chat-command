@@ -34,7 +34,9 @@ chatCommand('bot.hello bot.goodbye')
 
 Call actions with arguments
 ```js
-const chatCommand = require('chat-command')('math', {
+const chatCommandFactory = require('chat-command')
+
+const customMathParser = chatCommandFactory('math', {
   abs (a) {
     return Math.abs(Number(a))
   },
@@ -43,12 +45,23 @@ const chatCommand = require('chat-command')('math', {
   },
 })
 
-chatCommand(`
+customMathParser(`
   I'm too tired to do math
   math.add(1,2)
   math.abs(-10)
 `)
 // [3, 10]
+
+// You can even use native objects if you're especially adventurous
+const nativeMathParser = chatCommandFactory('Math', Math)
+
+nativeMathParser(`
+  Math.min(1,2)
+  Math.max(1,2)
+  Math.abs(-10)
+  Math.PI
+`)
+// [1, 2, 10, 3.141592653589793]
 ```
 
 Nest actions to create logical command structures
@@ -98,7 +111,9 @@ Promise.all(chatCommand('db.todos.add(Buy Groceries)'))
 
 Override default parsing behavior and/or exclude namespace
 ```js
-const chatCommand = require('chat-command')('', {
+const chatCommandFactory = require('chat-command')
+
+const tildeCommand = ('', {
   i: { love: { tildes: 'Me too!' } },
   andAmpersands (a, b, c) {
     return a + b + c
@@ -108,8 +123,19 @@ const chatCommand = require('chat-command')('', {
   argumentDelimiter: '&' // default: /, ?/
 })
 
-chatCommand('i~love~tildes andAmpersands(a&b&c)')
+tildeCommand('i~love~tildes andAmpersands(a&b&c)')
 // ['Me too!', 'abc']
+
+const slashCommand = chatCommandFactory('/', {
+  help () {
+    return 'I can try...'
+  }
+}, {
+  includeLeadingDelimiter: false
+})
+
+slashCommand('/help')
+// ['I can try...']
 ```
 
 The logic is composed of helpers `parse` and `execute` which may also be accessed separately for more granular control

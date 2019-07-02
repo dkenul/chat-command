@@ -43,6 +43,7 @@ describe('chatCommandFactory', () => {
     const { parse } = chatCommandFactory('', ACTIONS)
 
     expect(parse('foo')).toEqual(['foo'])
+    expect(parse('abcd singleArgumentOutput(a  b  c   d) efgh')).toEqual(['abcd', 'singleArgumentOutput(a  b  c   d)', 'efgh'])
   })
 
   describe('overrides', () => {
@@ -54,6 +55,12 @@ describe('chatCommandFactory', () => {
 
     it('respects argumentDelimiter override', () => {
       expect(execute('nest1-nest2-multiArgumentOutput(foo~bar~baz)')).toBe('multiArgumentOutput: foo - bar - baz')
+    })
+
+    it('respects includeLeadingDelimiter override', () => {
+      const { parse } = chatCommandFactory('/', ACTIONS, {includeLeadingDelimiter: false})
+
+      expect(parse('abcd /help efghi //help!')).toEqual(['help', '/help!'])
     })
   })
 })
@@ -90,11 +97,16 @@ describe('chatCommand', () => {
     })
 
     it('parses all commands in multiline strings', () => {
-      expect(parse('TEST.foo\nTEST.bar\nabcdefgTEST.bad\n   TEST.baz')).toEqual(['foo', 'bar', 'baz'])
+      expect(parse('TEST.foo\nTEST.bar\nabcdefgTEST.baz\n   TEST.quxTEST.alsoQux'))
+        .toEqual(['foo', 'bar', 'baz', 'quxTEST.alsoQux'])
     })
 
     it('respects the delimiter', () => {
       expect(parse('TEST.foo TESTabar TEST_baz')).toEqual(['foo'])
+    })
+
+    it('allows arguments to contain arbitrary break characters', () => {
+      expect(parse('abcd TEST.singleArgumentOutput(a  b  c   d) efgh')).toEqual(['singleArgumentOutput(a  b  c   d)'])
     })
   })
 
@@ -123,6 +135,10 @@ describe('chatCommand', () => {
 
     it('handles functions with multiple arguments', () => {
       expect(execute('multiArgumentOutput(a,b,c)')).toBe('multiArgumentOutput: a - b - c')
+    })
+
+    it('allows arguments to contain arbitrary break characters', () => {
+      expect(execute('singleArgumentOutput(a  b  c   d)')).toEqual('singleArgumentOutput: a  b  c   d')
     })
 
     it('respects default argument delimiter for functions with multiple arguments', () => {
@@ -161,6 +177,23 @@ describe('chatCommand', () => {
     it('is the composition (executeAll * parse)(x)', () => {
       expect(parseAndExecuteAll(text)).toEqual(executeAll(parse(text)))
     })
+
+    it('handles multiline multiargument function execution', () => {
+      const chatCommand = chatCommandFactory('math', {
+        abs (a) {
+          return Math.abs(Number(a))
+        },
+        add (a, b) {
+          return Number(a) + Number(b)
+        },
+      })
+
+      expect(chatCommand(`
+        I'm too tired to do math
+        math.add(1, 2)
+        math.abs(-10)
+      `)).toEqual([3, 10])
+    })
   })
 })
 
@@ -189,6 +222,17 @@ describe('README', () => {
       math.add(1,2)
       math.abs(-10)
     `)).toEqual([3, 10])
+  })
+
+  test('Example 1.1 (native Math)', () => {
+    const nativeMathParser = chatCommandFactory('Math', Math)
+
+    expect(nativeMathParser(`
+      Math.min(1,2)
+      Math.max(1,2)
+      Math.abs(-10)
+      Math.PI
+    `)).toEqual([1, 2, 10, 3.141592653589793])
   })
 
   test('Example 2 (game)', () => {
@@ -224,6 +268,18 @@ describe('README', () => {
     })
 
     expect(chatCommand('i~love~tildes andAmpersands(a&b&c)')).toEqual(['Me too!', 'abc'])
+  })
+
+  test('Example 4.1 (includeLeadingDelimiter override)', () => {
+    const slashCommand = chatCommandFactory('/', {
+      help () {
+        return 'I can try...'
+      }
+    }, {
+      includeLeadingDelimiter: false
+    })
+
+    expect(slashCommand('/help')).toEqual(['I can try...'])
   })
 
   test('Example 5 (helpers)', () => {
